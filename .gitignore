@@ -1,0 +1,11 @@
+# Compiled output from Maven
+backend/target/
+
+# IDE settings (these are personal to each developer)
+.idea/
+*.iml
+.vscode/
+
+# OS junk files
+.DS_Store
+Thumbs.db
