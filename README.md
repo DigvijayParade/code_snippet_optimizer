@@ -1,78 +1,84 @@
 # Code Snippet Optimizer
 
-A full-stack web application for saving, organizing, and managing code snippets with secure JWT authentication.
+A full-stack app for saving, organizing, and finding code snippets. The Spring Boot API provides JWT authentication and owner-scoped snippet CRUD; the React app provides account, search, tag, and editing screens.
 
-## Tech Stack
+## Stack
 
-### Backend
-- **Java 17** + **Spring Boot**
-- **Spring Security** with JWT (JSON Web Tokens) for stateless authentication
-- **Spring Data JPA** + **Hibernate** for database operations
-- **H2 Database** (in-memory, for development)
-- **Lombok** for reducing boilerplate code
-- **Maven** for dependency management
+- **Frontend:** React, Vite, CSS, Lucide icons
+- **Backend:** Java 17, Spring Boot, Spring Security, Spring Data JPA
+- **Development database:** H2 in-memory
+- **Authentication:** BCrypt passwords and JWT bearer tokens
 
-### Frontend (Coming Soon)
-- **React.js**
+## Run locally
 
-## Project Structure
+Set a local JWT signing key in PowerShell, then start the backend in that same terminal:
 
-```
-code_snippet_manager/
-└── backend/
-    └── src/main/java/com/example/demo/
-        ├── DemoApplication.java              # App entry point
-        ├── model/
-        │   └── User.java                     # JPA Entity - maps to users table
-        ├── repository/
-        │   └── UserRepository.java           # Database queries (auto-generated)
-        └── security/
-            ├── JwtUtils.java                 # Token generation and validation
-            ├── AuthTokenFilter.java          # Intercepts requests, checks JWT
-            ├── AuthEntryPointJwt.java        # Handles 401 Unauthorized errors
-            ├── UserDetailsImpl.java          # Bridges User entity and Spring Security
-            ├── UserDetailsServiceImpl.java   # Loads user from DB for authentication
-            └── WebSecurityConfig.java        # Master security configuration
-```
-
-## How Authentication Works
-
-1. User sends username and password to `/api/auth/signup` or `/api/auth/signin`
-2. Server validates credentials against the database
-3. On success, server generates a **JWT token** and sends it back
-4. For all future requests, the user includes this token in the `Authorization` header
-5. The `AuthTokenFilter` intercepts every request and validates the token before granting access
-
-## How to Run
-
-### Prerequisites
-- Java 17+
-- Maven (included via Maven Wrapper)
-
-### Run the Backend
-```bash
+```powershell
+$rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+$bytes = New-Object byte[] 32
+$rng.GetBytes($bytes)
+$env:JWT_SECRET = [Convert]::ToBase64String($bytes)
+$rng.Dispose()
 cd backend
-./mvnw spring-boot:run
+.\mvnw.cmd spring-boot:run
 ```
 
-### Access the H2 Database Console
-Navigate to `http://localhost:8080/h2-console` and use:
-- **JDBC URL:** `jdbc:h2:mem:snippetdb`
-- **Username:** `sa`
-- **Password:** `password`
+The key is randomly generated for that terminal session. Generate and store a separate secret in your deployment platform for production. The old in-source signing key has been removed; any service that used it should be restarted with a fresh key, which invalidates old tokens.
 
-## Current Progress
+Start the frontend in another terminal:
 
-- [x] Spring Boot project setup with Maven
-- [x] User entity and repository (JPA + Hibernate)
-- [x] JWT token generation and validation
-- [x] Spring Security filter chain and configuration
-- [ ] Auth Controller (Signup/Login API)
-- [ ] Snippet and Tag models
-- [ ] Snippet CRUD API
-- [ ] React Frontend
-- [ ] Connect Frontend to Backend
+```powershell
+cd frontend
+npm install
+npm run dev
+```
 
-## Author
+Open the local URL printed by Vite (normally `http://localhost:5173`). Vite forwards `/api` requests to the backend at `http://localhost:8080`, so both services should be running during development.
 
-Built by Digvijay - learning full-stack development one commit at a time.
+The frontend supports account registration and sign-in, listing and searching snippets, filtering by tag, creating and editing snippets, copying code, and deleting snippets. The session token is stored in browser local storage. The H2 console is available at `http://localhost:8080/h2-console` while the backend is running.
+
+## Production configuration
+
+The production profile uses PostgreSQL and requires all of these environment variables:
+
+- `SPRING_PROFILES_ACTIVE=prod`
+- `DATABASE_URL` — JDBC URL, such as `jdbc:postgresql://host:5432/snippets`
+- `DATABASE_USERNAME`
+- `DATABASE_PASSWORD`
+- `JWT_SECRET` — Base64 encoding of at least 32 random bytes
+- `JWT_EXPIRATION_MS` — optional; defaults to 24 hours
+
+Flyway applies versioned schema migrations at startup, and Hibernate validates the resulting schema. Back up the database before deploying new migrations. Keep the database and JWT credentials in the hosting provider's secret store; do not commit them to this repository.
+
+## API
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/auth/signup` | Create an account |
+| `POST` | `/api/auth/signin` | Sign in and receive a JWT |
+| `GET` | `/api/snippets` | List the signed-in user's snippets |
+| `GET` | `/api/snippets/{id}` | Get one owned snippet |
+| `POST` | `/api/snippets` | Create a snippet |
+| `PUT` | `/api/snippets/{id}` | Update an owned snippet |
+| `DELETE` | `/api/snippets/{id}` | Delete an owned snippet |
+
+Snippet requests accept `title`, `codeContent`, `language`, `description`, and a `tags` array. Protected routes require `Authorization: Bearer <token>`.
+
+## Project layout
+
+```text
+backend/   Spring Boot API and API tests
+frontend/  React and Vite application
+```
+
+## Status
+
+- [x] Backend authentication and JWT security
+- [x] Owner-scoped snippet and tag CRUD API
+- [x] React account screens and snippet library interface
+- [x] Frontend connected to the API through the Vite development proxy
+- [x] Backend API tests pass (4 tests)
+- [x] PostgreSQL production profile, environment-based secrets, and versioned schema migration
+- [ ] Provision production services, set provider secrets, and deploy frontend/backend
+
+For deployment, serve the frontend and backend under the same origin or configure the production frontend/API origin and backend CORS policy accordingly. The local Vite proxy is for development.

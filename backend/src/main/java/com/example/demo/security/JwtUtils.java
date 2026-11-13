@@ -3,6 +3,7 @@ package com.example.demo.security;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
@@ -20,6 +21,20 @@ public class JwtUtils {
     @Value("${jwt.expirationMs}")
     private int jwtExpirationMs;
 
+    private Key signingKey;
+
+    @PostConstruct
+    void initializeSigningKey() {
+        if (jwtExpirationMs <= 0) {
+            throw new IllegalStateException("jwt.expirationMs must be greater than zero");
+        }
+        try {
+            signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+        } catch (RuntimeException exception) {
+            throw new IllegalStateException("JWT_SECRET must be valid Base64 encoding of at least 32 random bytes", exception);
+        }
+    }
+
     // This creates the actual token when someone logs in successfully
     public String generateJwtToken(Authentication authentication) {
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
@@ -32,7 +47,7 @@ public class JwtUtils {
     }
 
     private Key key() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+        return signingKey;
     }
 
     // This extracts the username out of the token when they make a future request

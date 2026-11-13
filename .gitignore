@@ -1,5 +1,10 @@
 # Compiled output from Maven
 backend/target/
+frontend/node_modules/
+frontend/dist/
+.env
+.env.*
+!.env.example
 
 # IDE settings (these are personal to each developer)
 .idea/
