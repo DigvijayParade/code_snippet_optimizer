@@ -19,7 +19,10 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-@SpringBootTest
+@SpringBootTest(properties = {
+        "JWT_SECRET=VGhpc0lzQVRlc3RPbmx5S2V5VGhhdFNob3VsZE5vdEJlVXNlZEluUHJvZA==",
+        "JWT_EXPIRATION_MS=86400000"
+})
 @AutoConfigureMockMvc
 class SnippetApiTests {
     @Autowired private MockMvc mockMvc;

@@ -50,6 +50,18 @@ The production profile uses PostgreSQL and requires all of these environment var
 
 Flyway applies versioned schema migrations at startup, and Hibernate validates the resulting schema. Back up the database before deploying new migrations. Keep the database and JWT credentials in the hosting provider's secret store; do not commit them to this repository.
 
+## Container deployment
+
+The repository includes a Docker Compose stack for the frontend, API, and PostgreSQL. The frontend's Nginx server serves the built React app and forwards `/api` requests to the backend on the private Compose network. PostgreSQL is not exposed on a host port, and its data is stored in a named volume.
+
+1. Copy `.env.example` to `.env` and replace the database password and JWT secret. Generate the JWT secret with `openssl rand -base64 32` or the PowerShell snippet in **Run locally**.
+2. Start the stack with `docker compose up --build -d`.
+3. Open `http://localhost:8088` (or the port set with `APP_PORT`).
+
+To inspect logs, use `docker compose logs -f backend frontend`. Stop the services with `docker compose down`; the database volume remains. `docker compose down -v` also deletes the database volume and all stored snippets.
+
+For a public deployment, put the Compose stack behind a TLS-terminating reverse proxy, store `.env` values in the host's secret manager, and configure backups for the PostgreSQL volume.
+
 ## API
 
 | Method | Endpoint | Purpose |
@@ -79,6 +91,7 @@ frontend/  React and Vite application
 - [x] Frontend connected to the API through the Vite development proxy
 - [x] Backend API tests pass (4 tests)
 - [x] PostgreSQL production profile, environment-based secrets, and versioned schema migration
-- [ ] Provision production services, set provider secrets, and deploy frontend/backend
+- [x] Docker Compose deployment topology for frontend, backend, and PostgreSQL
+- [ ] Provision production hosting, set provider secrets, and deploy
 
 For deployment, serve the frontend and backend under the same origin or configure the production frontend/API origin and backend CORS policy accordingly. The local Vite proxy is for development.

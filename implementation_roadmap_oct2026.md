@@ -1,94 +1,76 @@
-# Implementation Roadmap – Integrated Agri Hub (Target Completion: October 2026)
+# Code Snippet Optimizer — Implementation Roadmap
 
----
+Last reviewed: 13 November 2026
 
-## 1️⃣ Project Status Overview (as of 07‑Sep‑2026)
-| Area | Current State | Done ✅ | Pending ⏳ |
-|------|---------------|--------|-----------|
-| **Core Flutter UI** | Navigation, Home, Education, Quiz, Tasks, Admin Dashboard – **Stable** | ✅ | — |
-| **AI Integration** | Gemini Vision for disease detection, Gemini Text for dynamic lessons & quizzes – functional, needs final prompt‑tuning and fallback handling. | ✅ | Minor improvements |
-| **Green‑Coin Economy** | Task submission flow, admin verification, coin credit – working in dev. | ✅ | UI polish & edge‑case handling |
-| **Multilingual & TTS** | Dynamic translation widget, TTS service set to `en-US` for English – working. | ✅ | Add Marathi support, test edge cases |
-| **Firebase Backend** | Firestore schema, Auth, Storage – deployed (test). | ✅ | Security rules review |
-| **Documentation & Paper** | README, basic spec, implementation report – drafted. | ✅ | Full paper write‑up |
+This roadmap describes the code snippet manager in this repository. The project has a Spring Boot REST API, a React/Vite frontend, H2 for local development, and a PostgreSQL production profile.
 
----
+## Current state
 
-## 2️⃣ Remaining Development Milestones (Oct 2026 Deadline)
-| Milestone | Description | Owner(s) | Target Finish |
-|----------|-------------|----------|---------------|
-| **M1 – AI Prompt Stabilisation** | Refine Gemini prompts for disease detection, lesson generation, quiz creation. Add regex validation of JSON output. | Dev‑Team (AI) | **Week 1 (09 Oct)** |
-| **M2 – UI/UX Polish** | Final visual redesign of Tasks & Quiz screens (glass‑morphism, micro‑animations). Ensure all buttons have accessible contrast. | UI/UX Lead | **Week 1 (12 Oct)** |
-| **M3 – Multilingual Expansion** | Add Marathi language dictionary, integrate fallback to Google Translate API, test TTS for all languages. | Localization Engineer | **Week 2 (19 Oct)** |
-| **M4 – Admin Verification Flow** | Implement batch verification UI, auto‑reject blurry uploads, add AI‑fallback verification for low‑load periods. | Backend Lead | **Week 2 (22 Oct)** |
-| **M5 – Security & Rules Audit** | Review Firebase security rules, add unit tests for auth/role checks, perform penetration test on API keys. | Security Engineer | **Week 3 (26 Oct)** |
-| **M6 – End‑to‑End Testing** | Write integration tests (Flutter driver) covering: disease detection → task reward, lesson → quiz → coin credit, multilingual UI. Run CI pipeline on GitHub Actions. | QA Engineer | **Week 3 (29 Oct)** |
-| **M7 – Documentation Finalisation** | Complete the research paper sections (Methodology, Results, Discussion). Add UML diagrams (class, sequence) and architecture diagram. Export to PDF. | Lead Author | **Week 4 (31 Oct)** |
-| **M8 – Presentation Prep** | Create slide deck (10‑12 slides), demo video (2 min), live‑demo checklist. Rehearse Q&A. | All | **Week 4 (31 Oct)** |
+| Area | Status | Notes |
+| --- | --- | --- |
+| Account and JWT authentication | Implemented | Signup/signin, BCrypt password hashes, bearer-token authentication |
+| Snippet API | Implemented | Create, list, read, update, delete; records are owner-scoped |
+| Tags | Implemented | Tags can be added to snippets and filtered in the UI |
+| React frontend | Implemented | Account screens, library, search, tag filtering, editor, copy, delete |
+| Local database | Implemented | H2 schema is created by Flyway |
+| Production configuration | Implemented | PostgreSQL profile, environment-based credentials and JWT key |
+| Containers | Implemented | Docker Compose includes PostgreSQL, API, and Nginx frontend |
+| Backend tests | Verified | All four tests pass against the Flyway-managed H2 schema (13 Nov 2026) |
+| Hosting | Pending | No production services have been provisioned or deployed |
 
----
+## Priorities
 
-## 3️⃣ Detailed Weekly Sprint Plan
+### P1 — Validate the full stack after the migration changes
 
-### **Week 1 (02‑09 Oct – 08‑Oct 2026)**
-- **Day 1‑2:** Finalise Gemini prompts & implement JSON validation helper (`GeminiResponseParser`).
-- **Day 3‑4:** UI polish – apply glass‑morphism cards, subtle hover/press animations, micro‑interactions on task upload.
-- **Day 5:** Internal demo of AI‑driven lesson & quiz flow; collect feedback.
+- [x] Run the backend test suite against the Flyway-managed H2 schema (4 passed).
+- Build and start the Docker Compose stack; exercise signup, sign-in, and snippet CRUD through the Nginx `/api` proxy.
+- Verify that the PostgreSQL profile starts against a clean PostgreSQL database and that Hibernate accepts the migrated schema.
 
-### **Week 2 (09‑Oct – 15‑Oct 2026)**
-- **Day 1‑3:** Add Marathi dictionary entries, integrate Google Translate fallback, test TTS voices (`mr-IN`).
-- **Day 4‑5:** Build admin batch verification screen; implement image‑blur detection (OpenCV via `image` package).
+Container and PostgreSQL checks remain pending because Docker and Podman are not installed in the current environment.
 
-### **Week 3 (16‑Oct – 22‑Oct 2026)**
-- **Day 1‑2:** Security rules audit; write unit tests for role‑based access.
-- **Day 3‑5:** End‑to‑end integration tests; set up CI pipeline (GitHub Actions + Firebase Test Lab).
+**Done when:** tests pass and the same core user flow works through the container stack and PostgreSQL.
 
-### **Week 4 (23‑Oct – 31‑Oct 2026)**
-- **Day 1‑3:** Write final paper sections; embed architecture diagram (drawn in draw.io, exported as SVG).
-- **Day 4‑5:** Prepare slide deck, record a 2‑minute demo video (screen + device capture), final rehearsals.
+### P2 — Deploy to a hosting provider
 
----
+- Choose a host for the containers and a managed PostgreSQL service.
+- Configure the production profile, JDBC URL, database credentials, and a randomly generated Base64 JWT key using the host's secret store.
+- Put the public app behind HTTPS and verify browser-to-API requests.
+- Configure automated database backups and document recovery steps.
 
-## 4️⃣ Deliverables for Presentation
-| Deliverable | Format | Where to Find |
-|------------|--------|----------------|
-| **Demo APK** | `integrated_agri_hub.apk` (signed) | `build/app/outputs/flutter-apk/` |
-| **Architecture Diagram** | SVG/PNG | `docs/architecture.svg` |
-| **UML Class & Sequence Diagrams** | PDF | `docs/uml.pdf` |
-| **Research Paper** | PDF (IEEE template) | `paper/Integrated_Agri_Hub.pdf` |
-| **Slide Deck** | PPTX | `presentation/AgriHub_Oct2026.pptx` |
-| **Demo Video** | MP4 (2 min) | `presentation/demo.mp4` |
+**Done when:** a public HTTPS deployment is available, secrets are not stored in the repository, and a backup can be restored.
 
----
+### P3 — Improve production security and operations
 
-## 5️⃣ Risk Register & Mitigation
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| Gemini API latency / quota | Missed deadline for AI‑generated content | Medium | Cache generated lessons locally; fallback to static content after 2‑day retry.
-| Multilingual TTS voice mismatch | Poor user experience for Hindi/Marathi users | Low | Force language codes (`en‑US`, `hi‑IN`, `mr‑IN`) and test on multiple devices.
-| Firebase Security Mis‑config | Data breach risk | Low | Conduct external security audit; enable Firebase App Check.
-| Presentation demo crashes | Live demo failure | High | Pre‑load all assets, run a rehearsal on the same device used for the demo.
+- Add rate limits for signup and sign-in, and review API error responses and request-size limits.
+- Decide how to protect browser sessions against script injection before expanding token persistence in local storage.
+- Add health and readiness endpoints for the API and container orchestration.
+- Review dependency updates and container image updates on a regular schedule.
 
----
+**Done when:** the production checklist is reviewed and operational health can be monitored.
 
-## 6️⃣ Quick Reference – Commands & Scripts
-```bash
-# Build signed APK (release)
-flutter build apk --release
+### P4 — Product polish
 
-# Run unit & integration tests
-flutter test && flutter drive --target=test_driver/app.dart
+- Add syntax highlighting with a supported language set.
+- Implement visible sorting controls and keyboard shortcuts, or remove UI affordances that imply those features.
+- Improve empty, loading, and error states and check keyboard navigation on small and large screens.
 
-# Deploy Firestore security rules
-firebase deploy --only firestore:rules
+**Done when:** the snippet library is comfortable to use on mobile and desktop, with clear behavior for each visible control.
 
-# Generate UML (using plantuml-cli)
-plantuml -tsvg docs/uml/*.puml -o docs
+## Local commands
+
+```powershell
+# Backend tests
+cd backend
+.\mvnw.cmd test
+
+# Frontend production build
+cd ..\frontend
+npm ci
+npm run build
+
+# Container stack (copy .env.example to .env and set secrets first)
+cd ..
+docker compose up --build -d
 ```
 
----
-
-### 🎯 Bottom Line
-Following this roadmap will have **all functional, UI, security, and documentation pieces** ready before the October presentation, ensuring a smooth live demo and a solid research paper.
-
-If you need any specific sections expanded (e.g., deeper AI prompt examples or database schema), just let me know!
+See [README.md](README.md) for environment setup, API routes, and container instructions.
